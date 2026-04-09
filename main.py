@@ -273,7 +273,7 @@ class MainWindow(ui_comp.AppWindow):
             self.show_toast("Error resetting settings!", is_error=True)
 
 # Update System Configuration
-VERSION = "1.1.2" # Official Release Version
+VERSION = "1.1.3" # Official Release Version
 # Placeholder: The user will replace this once they have a repo
 REPO_URL = "https://api.github.com/repos/OwlWorksInnovations/r6-server-switcher/releases/latest"
 

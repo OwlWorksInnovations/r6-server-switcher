@@ -1,5 +1,23 @@
 import { Button, VerticalBox, ComboBox, HorizontalBox, ScrollView } from "std-widgets.slint";
 
+component BannerAd inherits Rectangle {
+    in property <string> position: "top"; // top, bottom, left, right
+    background: #111214;
+    border-width: 1px;
+    border-color: #2b2d31;
+    
+    VerticalBox {
+        alignment: center;
+        Text {
+            text: "AD - " + root.position;
+            color: #4e5058;
+            font-size: 10px;
+            font-weight: 800;
+            horizontal-alignment: center;
+        }
+    }
+}
+
 component Toast inherits Rectangle {
     in property <string> message: "";
     in property <bool> is-error: false;
@@ -39,9 +57,9 @@ component Toast inherits Rectangle {
 
 export component AppWindow inherits Window {
     title: "R6 Server Switcher";
-    width: 550px;
-    height: 620px;
-    background: #1e1f22;
+    width: 750px;
+    height: 820px;
+    background: #000000;
     icon: @image-url("../icon.png");
 
     in property <string> file_path_display: "Not selected";
@@ -77,151 +95,176 @@ export component AppWindow inherits Window {
         }
     }
 
-    // Single Root Element allowing overlays
-    Rectangle {
-        VerticalBox {
-            padding: 0px;
-            spacing: 0px;
-            alignment: stretch;
+    // Outer Layout with Ads
+    VerticalBox {
+        padding: 0; spacing: 0;
 
-            // Update Banner
-            if update_available : Rectangle {
-                height: 40px;
-                background: #5865f2;
-                HorizontalBox {
-                    padding: 10px;
-                    spacing: 15px;
-                    alignment: center;
-                    Text {
-                        text: "New Version Available: \{root.update_version}";
-                        color: #ffffff;
-                        font-size: 13px;
-                        font-weight: 700;
-                        vertical-alignment: center;
-                    }
-                    Rectangle {
-                        height: 24px;
-                        width: 80px;
-                        background: #ffffff;
-                        border-radius: 4px;
-                        Text { text: "UPDATE"; color: #5865f2; font-size: 11px; font-weight: 800; }
-                        TouchArea { clicked => { root.start_update(); } }
-                    }
-                }
-            }
+        // TOP AD
+        BannerAd { position: "top"; height: 100px; }
 
-            // Main Scrollable Area
-            ScrollView {
-                vertical-stretch: 1;
-                VerticalBox {
-                    padding: 40px;
-                    padding-top: 20px;
-                    spacing: 25px;
-                    alignment: start;
+        HorizontalBox {
+            padding: 0; spacing: 0;
+            
+            // LEFT AD
+            BannerAd { position: "left"; width: 100px; }
 
-                    // Branding
-                    VerticalBox {
-                        spacing: 4px;
-                        Text { text: "RAINBOW SIX SIEGE"; color: #5865f2; font-size: 32px; font-weight: 900; horizontal-alignment: center; letter-spacing: 1px; }
-                        Text { text: "SERVER SWITCHER"; color: #b5bac1; font-size: 14px; font-weight: 700; horizontal-alignment: center; opacity: 0.8; letter-spacing: 3px; }
-                    }
-
-                    // Account section
-                    if accounts.length > 0 : Rectangle {
-                        background: #2b2d31;
-                        border-radius: 12px;
-                        border-width: 1px;
-                        border-color: #313338;
-                        VerticalBox {
-                            padding: 20px;
-                            spacing: 10px;
-                            Text { text: "SELECT ACCOUNT"; color: #b5bac1; font-size: 11px; font-weight: 800; }
-                            ComboBox { model: root.accounts; current-value <=> root.selected_account; height: 45px; selected => { root.account_changed(self.current-value); } }
-                        }
-                    }
-
-                    // Settings section
-                    Rectangle {
-                        background: #2b2d31;
-                        border-radius: 12px;
-                        border-width: 1px;
-                        border-color: #313338;
-                        VerticalBox {
-                            padding: 20px;
-                            spacing: 10px;
-                            HorizontalBox {
-                                alignment: space-between;
-                                Text { text: "DATA CENTER CONFIGURATION"; color: #b5bac1; font-size: 11px; font-weight: 800; vertical-alignment: center; }
-                                HorizontalBox {
-                                    padding: 0; spacing: 8px; alignment: end;
-                                    Rectangle {
-                                        height: 28px; width: 60px; background: root.sort_mode == "az" ? #5865f2 : #383a40; border-radius: 6px;
-                                        Text { text: "A-Z"; color: #ffffff; font-size: 10px; font-weight: 800; }
-                                        TouchArea { clicked => { root.sort_mode_changed("az"); } }
-                                    }
-                                    Rectangle {
-                                        height: 28px; width: 100px; background: root.sort_mode == "continent" ? #5865f2 : #383a40; border-radius: 6px;
-                                        Text { text: "BY CONTINENT"; color: #ffffff; font-size: 10px; font-weight: 800; }
-                                        TouchArea { clicked => { root.sort_mode_changed("continent"); } }
-                                    }
-                                }
-                            }
-                            ComboBox {
-                                model: root.server_list; current-value <=> root.selected_server; height: 45px;
-                                selected => { root.check_selection(self.current-value); }
-                            }
-                            Text { text: "Path: \{root.file_path_display}"; color: #949ba4; font-size: 10px; overflow: elide; }
-                            if recent_1 != "" || recent_2 != "" || recent_3 != "" : VerticalBox {
-                                padding-top: 15px; spacing: 8px;
-                                Text { text: "QUICK HISTORY"; color: #b5bac1; font-size: 10px; font-weight: 800; opacity: 0.6; }
-                                HorizontalBox {
-                                    spacing: 8px; alignment: start;
-                                    if recent_1 != "" : Rectangle {
-                                        height: 32px; background: #383a40; border-radius: 6px;
-                                        HorizontalBox { padding-left: 12px; padding-right: 12px; alignment: center; Text { text: recent_1; color: #ffffff; font-size: 11px; font-weight: 600; vertical-alignment: center; } }
-                                        TouchArea { clicked => { root.selected_server = recent_1; root.apply_changes(recent_1); } }
-                                    }
-                                    if recent_2 != "" : Rectangle {
-                                        height: 32px; background: #383a40; border-radius: 6px;
-                                        HorizontalBox { padding-left: 12px; padding-right: 12px; alignment: center; Text { text: recent_2; color: #ffffff; font-size: 11px; font-weight: 600; vertical-alignment: center; } }
-                                        TouchArea { clicked => { root.selected_server = recent_2; root.apply_changes(recent_2); } }
-                                    }
-                                    if recent_3 != "" : Rectangle {
-                                        height: 32px; background: #383a40; border-radius: 6px;
-                                        HorizontalBox { padding-left: 12px; padding-right: 12px; alignment: center; Text { text: recent_3; color: #ffffff; font-size: 11px; font-weight: 600; vertical-alignment: center; } }
-                                        TouchArea { clicked => { root.selected_server = recent_3; root.apply_changes(recent_3); } }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Fixed Footer
+            // CORE APP CONTENT
             Rectangle {
+                width: 550px;
+                height: 620px;
                 background: #1e1f22;
-                height: 90px;
+
                 VerticalBox {
-                    padding: 20px; padding-top: 10px; alignment: center;
-                    HorizontalBox {
-                        spacing: 16px; height: 55px;
-                        Button { text: "RESET TO DEFAULT"; height: 55px; clicked => { root.reset_to_default(); } }
-                        Button { text: "APPLY SETTINGS"; primary: true; height: 55px; clicked => { root.apply_changes(root.selected_server); } }
+                    padding: 0px;
+                    spacing: 0px;
+                    alignment: stretch;
+
+                    // Update Banner
+                    if update_available : Rectangle {
+                        height: 40px;
+                        background: #5865f2;
+                        HorizontalBox {
+                            padding: 10px;
+                            spacing: 15px;
+                            alignment: center;
+                            Text {
+                                text: "New Version Available: \{root.update_version}";
+                                color: #ffffff;
+                                font-size: 13px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+                            Rectangle {
+                                height: 24px;
+                                width: 80px;
+                                background: #ffffff;
+                                border-radius: 4px;
+                                Text { text: "UPDATE"; color: #5865f2; font-size: 11px; font-weight: 800; }
+                                TouchArea { clicked => { root.start_update(); } }
+                            }
+                        }
+                    }
+
+                    // Main Scrollable Area
+                    ScrollView {
+                        vertical-stretch: 1;
+                        VerticalBox {
+                            padding: 40px;
+                            padding-top: 20px;
+                            spacing: 25px;
+                            alignment: start;
+
+                            // Branding
+                            VerticalBox {
+                                spacing: 4px;
+                                Text { text: "RAINBOW SIX SIEGE"; color: #5865f2; font-size: 32px; font-weight: 900; horizontal-alignment: center; letter-spacing: 1px; }
+                                Text { text: "SERVER SWITCHER"; color: #b5bac1; font-size: 14px; font-weight: 700; horizontal-alignment: center; opacity: 0.8; letter-spacing: 3px; }
+                            }
+
+                            // Account section
+                            if accounts.length > 0 : Rectangle {
+                                background: #2b2d31;
+                                border-radius: 12px;
+                                border-width: 1px;
+                                border-color: #313338;
+                                VerticalBox {
+                                    padding: 20px;
+                                    spacing: 10px;
+                                    Text { text: "SELECT ACCOUNT"; color: #b5bac1; font-size: 11px; font-weight: 800; }
+                                    ComboBox { model: root.accounts; current-value <=> root.selected_account; height: 45px; selected => { root.account_changed(self.current-value); } }
+                                }
+                            }
+
+                            // Settings section
+                            Rectangle {
+                                background: #2b2d31;
+                                border-radius: 12px;
+                                border-width: 1px;
+                                border-color: #313338;
+                                VerticalBox {
+                                    padding: 20px;
+                                    spacing: 10px;
+                                    HorizontalBox {
+                                        alignment: space-between;
+                                        Text { text: "DATA CENTER CONFIGURATION"; color: #b5bac1; font-size: 11px; font-weight: 800; vertical-alignment: center; }
+                                        HorizontalBox {
+                                            padding: 0; spacing: 8px; alignment: end;
+                                            Rectangle {
+                                                height: 28px; width: 60px; background: root.sort_mode == "az" ? #5865f2 : #383a40; border-radius: 6px;
+                                                Text { text: "A-Z"; color: #ffffff; font-size: 10px; font-weight: 800; }
+                                                TouchArea { clicked => { root.sort_mode_changed("az"); } }
+                                            }
+                                            Rectangle {
+                                                height: 28px; width: 100px; background: root.sort_mode == "continent" ? #5865f2 : #383a40; border-radius: 6px;
+                                                Text { text: "BY CONTINENT"; color: #ffffff; font-size: 10px; font-weight: 800; }
+                                                TouchArea { clicked => { root.sort_mode_changed("continent"); } }
+                                            }
+                                        }
+                                    }
+                                    ComboBox {
+                                        model: root.server_list; current-value <=> root.selected_server; height: 45px;
+                                        selected => { root.check_selection(self.current-value); }
+                                    }
+                                    Text { text: "Path: \{root.file_path_display}"; color: #949ba4; font-size: 10px; overflow: elide; }
+                                    if recent_1 != "" || recent_2 != "" || recent_3 != "" : VerticalBox {
+                                        padding-top: 15px; spacing: 8px;
+                                        Text { text: "QUICK HISTORY"; color: #b5bac1; font-size: 10px; font-weight: 800; opacity: 0.6; }
+                                        HorizontalBox {
+                                            spacing: 8px; alignment: start;
+                                            if recent_1 != "" : Rectangle {
+                                                height: 32px; background: #383a40; border-radius: 6px;
+                                                HorizontalBox { padding-left: 12px; padding-right: 12px; alignment: center; Text { text: recent_1; color: #ffffff; font-size: 11px; font-weight: 600; vertical-alignment: center; } }
+                                                TouchArea { clicked => { root.selected_server = recent_1; root.apply_changes(recent_1); } }
+                                            }
+                                            if recent_2 != "" : Rectangle {
+                                                height: 32px; background: #383a40; border-radius: 6px;
+                                                HorizontalBox { padding-left: 12px; padding-right: 12px; alignment: center; Text { text: recent_2; color: #ffffff; font-size: 11px; font-weight: 600; vertical-alignment: center; } }
+                                                TouchArea { clicked => { root.selected_server = recent_2; root.apply_changes(recent_2); } }
+                                            }
+                                            if recent_3 != "" : Rectangle {
+                                                height: 32px; background: #383a40; border-radius: 6px;
+                                                HorizontalBox { padding-left: 12px; padding-right: 12px; alignment: center; Text { text: recent_3; color: #ffffff; font-size: 11px; font-weight: 600; vertical-alignment: center; } }
+                                                TouchArea { clicked => { root.selected_server = recent_3; root.apply_changes(recent_3); } }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Fixed Footer
+                    Rectangle {
+                        background: #1e1f22;
+                        height: 90px;
+                        VerticalBox {
+                            padding: 20px; padding-top: 10px; alignment: center;
+                            HorizontalBox {
+                                spacing: 16px; height: 55px;
+                                Button { text: "RESET TO DEFAULT"; height: 55px; clicked => { root.reset_to_default(); } }
+                                Button { text: "APPLY SETTINGS"; primary: true; height: 55px; clicked => { root.apply_changes(root.selected_server); } }
+                            }
+                        }
                     }
                 }
+
+                // Overlay Toast (now relative to the CORE APP Rectangle)
+                Toast {
+                    message: root.toast_msg;
+                    is-error: root.toast_err;
+                    is-shown: root.toast_showing;
+                    x: (parent.width - self.width) / 2;
+                    y: parent.height - (self.is-shown ? 80px : -100px);
+                    animate y { duration: 300ms; easing: ease-out; }
+                }
             }
+
+            // RIGHT AD
+            BannerAd { position: "right"; width: 100px; }
         }
 
-        // Overlay Toast (Sibling of VerticalBox inside root Rectangle)
-        Toast {
-            message: root.toast_msg;
-            is-error: root.toast_err;
-            is-shown: root.toast_showing;
-            x: (parent.width - self.width) / 2;
-            y: parent.height - (self.is-shown ? 80px : -100px);
-            animate y { duration: 300ms; easing: ease-out; }
-        }
+        // BOTTOM AD
+        BannerAd { position: "bottom"; height: 100px; }
     }
 
     changed toast_showing => {
