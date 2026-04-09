@@ -6,6 +6,7 @@ import pystray
 from PIL import Image, ImageDraw
 import threading
 import sys
+import json
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -106,6 +107,7 @@ class MainWindow(ui_comp.AppWindow):
         super().__init__(*args, **kwargs)
         self.accounts_dict = get_r6_accounts()
         self.settings_path = None
+        self._history_list = []
         
         account_list = list(self.accounts_dict.keys())
         self.accounts = slint.ListModel(account_list)
@@ -120,7 +122,45 @@ class MainWindow(ui_comp.AppWindow):
         
         self.sort_mode = "az"
         self.update_server_list()
+        self.load_history()
     
+    def sync_history_to_ui(self):
+        # Map the top 3 items to properties. Slint strings are stable.
+        try:
+            self.recent_1 = self._history_list[0] if len(self._history_list) > 0 else ""
+            self.recent_2 = self._history_list[1] if len(self._history_list) > 1 else ""
+            self.recent_3 = self._history_list[2] if len(self._history_list) > 2 else ""
+            print(f"Synced UI: {self.recent_1}, {self.recent_2}, {self.recent_3}")
+        except Exception as e:
+            print(f"Sync error: {e}")
+
+    def load_history(self):
+        config_path = os.path.join(os.environ['USERPROFILE'], '.r6_switcher_config.json')
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r') as f:
+                    data = json.load(f)
+                    self._history_list = data.get('recent', [])
+                    print(f"Loaded history: {self._history_list}")
+                    self.sync_history_to_ui()
+            except Exception as e:
+                print(f"Error loading history: {e}")
+                self._history_list = []
+                self.sync_history_to_ui()
+        else:
+            print("No history file found.")
+            self._history_list = []
+            self.sync_history_to_ui()
+
+    def save_history(self):
+        config_path = os.path.join(os.environ['USERPROFILE'], '.r6_switcher_config.json')
+        try:
+            with open(config_path, 'w') as f:
+                json.dump({'recent': self._history_list}, f)
+            print(f"Saved history: {self._history_list}")
+        except Exception as e:
+            print(f"Error saving history: {e}")
+
     def show_toast(self, message, is_error=False):
         self.toast_msg = message
         self.toast_err = is_error
@@ -176,19 +216,50 @@ class MainWindow(ui_comp.AppWindow):
         self.load_account_settings(account_id)
 
     @slint.callback
+    def check_selection(self, value):
+        if "---" in value:
+            self.show_toast("Cannot select region headers", is_error=True)
+            self.selected_server = "Default (Auto)"
+            return True
+        return False
+
+    @slint.callback
     def start_update(self):
         self.show_toast("Starting download...")
         # This would pass the actual URL from the GitHub release to the thread
         # For now, we use a placeholder
-        fake_url = "https://github.com/YOUR_USERNAME/r6-server-switcher/releases/latest/download/R6ServerSwitcher.exe"
+        fake_url = "https://github.com/OwlWorksInnovations/r6-server-switcher/releases/latest/download/R6ServerSwitcher.exe"
         threading.Thread(target=download_and_restart, args=(fake_url,), daemon=True).start()
 
     @slint.callback
     def apply_changes(self, server_display_name):
+        if "---" in server_display_name:
+            self.show_toast("Cannot select region headers", is_error=True)
+            self.selected_server = "Default (Auto)"
+            return
+
         hint = SERVERS.get(server_display_name, "default")
         success = set_datacenter(self.settings_path, hint)
         if success:
             self.show_toast(f"Saved: {server_display_name}")
+            # Update history safely avoiding headers
+            try:
+                # 1. Ignore if it's a category header (contains ---)
+                if "---" in server_display_name:
+                    return
+
+                # 2. Only add if it's a known valid server
+                if server_display_name in SERVERS:
+                    if server_display_name in self._history_list:
+                        self._history_list.remove(server_display_name)
+                    self._history_list.insert(0, server_display_name)
+                    self._history_list = self._history_list[:3]
+                    
+                    # Sync to stable UI properties
+                    self.sync_history_to_ui()
+                    self.save_history()
+            except Exception as e:
+                print(f"History update failed: {e}")
         else:
             self.show_toast("Error saving changes!", is_error=True)
 
@@ -202,9 +273,9 @@ class MainWindow(ui_comp.AppWindow):
             self.show_toast("Error resetting settings!", is_error=True)
 
 # Update System Configuration
-VERSION = "1.0.0" # Current Version
+VERSION = "1.1.2" # Official Release Version
 # Placeholder: The user will replace this once they have a repo
-REPO_URL = "https://api.github.com/repos/YOUR_USERNAME/r6-server-switcher/releases/latest"
+REPO_URL = "https://api.github.com/repos/OwlWorksInnovations/r6-server-switcher/releases/latest"
 
 def check_updates_background(window_instance):
     """ Checks for updates in a separate thread to avoid UI freezing """
@@ -223,8 +294,12 @@ def check_updates_background(window_instance):
             
             # Simple version comparison
             if latest_version != VERSION:
-                window_instance.update_version = latest_version
-                window_instance.update_available = True
+                # Schedule the UI update on the main thread
+                def do_update():
+                    window_instance.update_version = latest_version
+                    window_instance.update_available = True
+                
+                slint.invoke_from_event_loop(do_update)
     except Exception as e:
         print(f"Update check failed: {e}")
 
