@@ -1,0 +1,285 @@
+import { Button, VerticalBox, ComboBox, HorizontalBox } from "std-widgets.slint";
+
+component Toast inherits Rectangle {
+    in property <string> message: "";
+    in property <bool> is-error: false;
+    in property <bool> is-shown: false;
+    
+    background: root.is-error ? #da373c : #23a559;
+    border-radius: 8px;
+    height: 60px;
+    width: 350px;
+    
+    opacity: root.is-shown ? 1 : 0;
+    visible: self.opacity > 0;
+    
+    animate opacity { duration: 250ms; }
+
+    HorizontalBox {
+        padding: 15px;
+        spacing: 12px;
+        alignment: center;
+        
+        Text {
+            text: root.is-error ? "✖" : "✔";
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 800;
+        }
+        
+        Text {
+            text: root.message;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "R6 Server Switcher";
+    width: 550px;
+    height: 620px;
+    background: #1e1f22;
+    icon: @image-url("../icon.png");
+
+    in property <string> file_path_display: "Not selected";
+    in-out property <string> selected_server: "Default (Auto)";
+    in-out property <[string]> server_list: ["Default (Auto)", "Australia East", "Brazil South", "Central US", "East Asia", "East US", "Japan East", "North Europe", "South Africa North", "South Central US", "South East Asia", "UAE North", "West Europe", "West US"];
+    in property <[string]> accounts: [];
+    in-out property <string> selected_account: "";
+    
+    in property <string> sort_mode: "az"; // "az" or "continent"
+    in property <bool> update_available: false;
+    in property <string> update_version: "";
+    
+    in-out property <string> toast_msg: "";
+    in-out property <bool> toast_err: false;
+    in-out property <bool> toast_showing: false;
+    
+    callback apply_changes(string);
+    callback reset_to_default();
+    callback account_changed(string);
+    callback sort_mode_changed(string);
+    callback start_update();
+    
+    toast_timer := Timer {
+        interval: 3000ms;
+        running: false;
+        triggered() => {
+            root.toast_showing = false;
+            self.running = false;
+        }
+    }
+
+    // Main Content
+    VerticalBox {
+        padding: 0px; // Removing padding here to allow full-width banner
+        spacing: 0px;
+        alignment: start;
+
+        // Update Banner
+        if update_available : Rectangle {
+            height: 40px;
+            background: #5865f2;
+            
+            HorizontalBox {
+                padding: 10px;
+                spacing: 15px;
+                alignment: center;
+                
+                Text {
+                    text: "New Version Available: \{root.update_version}";
+                    color: #ffffff;
+                    font-size: 13px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+                
+                Rectangle {
+                    height: 24px;
+                    width: 80px;
+                    background: #ffffff;
+                    border-radius: 4px;
+                    
+                    Text {
+                        text: "UPDATE";
+                        color: #5865f2;
+                        font-size: 11px;
+                        font-weight: 800;
+                    }
+                    
+                    TouchArea {
+                        clicked => { root.start_update(); }
+                    }
+                }
+            }
+        }
+
+        VerticalBox {
+            padding: 40px;
+            spacing: 25px;
+            alignment: start;
+
+        // Branding
+        VerticalBox {
+            spacing: 4px;
+            Text {
+                text: "RAINBOW SIX SIEGE";
+                color: #5865f2;
+                font-size: 32px;
+                font-weight: 900;
+                horizontal-alignment: center;
+                letter-spacing: 1px;
+            }
+            Text {
+                text: "SERVER SWITCHER";
+                color: #b5bac1;
+                font-size: 14px;
+                font-weight: 700;
+                horizontal-alignment: center;
+                opacity: 0.8;
+                letter-spacing: 3px;
+            }
+        }
+
+        Rectangle { height: 10px; }
+
+        // Account section
+        if accounts.length > 0 : Rectangle {
+            background: #2b2d31;
+            border-radius: 12px;
+            border-width: 1px;
+            border-color: #313338;
+            
+            VerticalBox {
+                padding: 20px;
+                spacing: 10px;
+                Text {
+                    text: "SELECT ACCOUNT";
+                    color: #b5bac1;
+                    font-size: 11px;
+                    font-weight: 800;
+                }
+                ComboBox {
+                    model: root.accounts;
+                    current-value <=> root.selected_account;
+                    height: 45px;
+                    selected => { root.account_changed(self.current-value); }
+                }
+            }
+        }
+
+        // Settings section
+        Rectangle {
+            background: #2b2d31;
+            border-radius: 12px;
+            border-width: 1px;
+            border-color: #313338;
+            
+            VerticalBox {
+                padding: 20px;
+                spacing: 10px;
+                Text {
+                    text: "DATA CENTER CONFIGURATION";
+                    color: #b5bac1;
+                    font-size: 11px;
+                    font-weight: 800;
+                }
+
+                // Sorting Toggles
+                HorizontalBox {
+                    padding: 0;
+                    spacing: 8px;
+                    alignment: start;
+                    
+                    Rectangle {
+                        height: 32px;
+                        width: 100px;
+                        background: root.sort_mode == "az" ? #5865f2 : #383a40;
+                        border-radius: 6px;
+                        
+                        Text {
+                            text: "A-Z";
+                            color: #ffffff;
+                            font-size: 11px;
+                            font-weight: 800;
+                        }
+                        
+                        TouchArea {
+                            clicked => { root.sort_mode_changed("az"); }
+                        }
+                    }
+                    
+                    Rectangle {
+                        height: 32px;
+                        width: 120px;
+                        background: root.sort_mode == "continent" ? #5865f2 : #383a40;
+                        border-radius: 6px;
+                        
+                        Text {
+                            text: "BY CONTINENT";
+                            color: #ffffff;
+                            font-size: 11px;
+                            font-weight: 800;
+                        }
+                        
+                        TouchArea {
+                            clicked => { root.sort_mode_changed("continent"); }
+                        }
+                    }
+                }
+
+                ComboBox {
+                    model: root.server_list;
+                    current-value <=> root.selected_server;
+                    height: 45px;
+                }
+                Text {
+                    text: "Path: \{root.file_path_display}";
+                    color: #949ba4;
+                    font-size: 10px;
+                    overflow: elide;
+                }
+            }
+        }
+
+        Rectangle { height: 5px; }
+
+        HorizontalBox {
+            spacing: 16px;
+            height: 55px;
+            Button {
+                text: "RESET TO DEFAULT";
+                height: 55px;
+                clicked => { root.reset_to_default(); }
+            }
+            Button {
+                text: "APPLY SETTINGS";
+                primary: true;
+                height: 55px;
+                clicked => { root.apply_changes(root.selected_server); }
+            }
+        }
+    }
+
+    // Overlay Toast
+    Toast {
+        message: root.toast_msg;
+        is-error: root.toast_err;
+        is-shown: root.toast_showing;
+        
+        // Manual positioning relative to root window
+        x: (parent.width - self.width) / 2;
+        y: parent.height - (self.is-shown ? 80px : -100px);
+        
+        animate y { duration: 300ms; easing: ease-out; }
+    }
+    
+    changed toast_showing => {
+        if (self.toast_showing) {
+            toast_timer.running = true;
+        }
+    }
+}

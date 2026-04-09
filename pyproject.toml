@@ -1,0 +1,17 @@
+[project]
+name = "r6-server-switcher"
+version = "0.1.0"
+description = "makes it easy to switch servers in rainbow six siege"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "slint>=1.11.0a1",
+    "pystray",
+    "Pillow",
+    "requests",
+]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.19.0",
+]
