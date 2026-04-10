@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "r6-server-switcher (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "r6-server-switcher (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
