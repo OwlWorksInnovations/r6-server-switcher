@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>r6-server-switcher</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./src/style.css">
+</head>
+
+<body>
+    <div id="app">
+        <div class="window-controls">
+            <button id="min-btn" class="win-btn" title="Minimize">－</button>
+            <button id="close-btn" class="win-btn close" title="Hide to Tray">×</button>
+        </div>
+        <main class="content-wrapper" style="--wails-draggable: drag">
+            <section class="branding">
+                <h1 class="accent-title">R6 SERVER SWITCHER</h1>
+                <p class="author-subtext">By Myzerfist</p>
+            </section>
+
+            <section class="selection-area">
+                <div class="field-group">
+                    <label for="account-dropdown">Select your account</label>
+                    <div class="select-wrapper">
+                        <select id="account-dropdown" class="winui-select">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label for="server-dropdown">Select game server</label>
+                    <div class="select-wrapper">
+                        <select id="server-dropdown" class="winui-select">
+                        </select>
+                        <button id="favorite-star" class="btn-icon star-overlay" title="Toggle current as favorite">
+                            <img src="./src/assets/images/star.png" alt="star" class="star-img">
+                        </button>
+                    </div>
+                </div>
+
+                <div class="shortcut-row">
+                    <button id="fav-0" class="btn-ghost favorite-slot" data-slot="0">Slot 1</button>
+                    <button id="fav-1" class="btn-ghost favorite-slot" data-slot="1">Slot 2</button>
+                    <button id="fav-2" class="btn-ghost favorite-slot" data-slot="2">Slot 3</button>
+                </div>
+
+                <div class="action-row">
+                    <button id="default-btn" class="btn-outline">Default</button>
+                    <button id="save-btn" class="btn-accent">Save</button>
+                </div>
+
+                <a href="https://ko-fi.com/owlworksinnovations" target="_blank" class="coffee-link coffee-centered">
+                    <img src="./src/assets/images/coffee.png" alt="coffee" class="icon-small">
+                    <span>Buy me a coffee</span>
+                </a>
+            </section>
+        </main>
+    </div>
+    <script src="./src/main.js" type="module"></script>
+</body>
+
+</html>
