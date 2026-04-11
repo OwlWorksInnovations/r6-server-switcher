@@ -203,7 +203,7 @@ label {
 .select-wrapper::after {
     content: '';
     position: absolute;
-    right: 8px; /* Moved to far right */
+    right: 8px;
     top: 50%;
     transform: translateY(-50%);
     width: 10px;
@@ -222,7 +222,7 @@ label {
 
 .star-overlay {
     position: relative;
-    right: 32px; /* Moved to the left of chevron */
+    right: 32px;
     width: 24px !important;
     height: 24px !important;
     z-index: 10;
