@@ -1,5 +1,9 @@
 # README
 
+## Performance
+App size: 10.8 MB
+RAM usage: 40 MB
+
 ## About
 
 This is the official Wails Vanilla template.
