@@ -4,7 +4,7 @@
 
 ## Performance
 - App size: 10.8 MB
-- RAM usage: 40 MB
+- RAM usage: 5 MB
 
 ## About
 
